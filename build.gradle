@@ -1,0 +1,54 @@
+plugins {
+    id 'java'
+}
+
+group = 'azriani'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.1'
+    testImplementation 'org.junit.vintage:junit-vintage-engine:5.10.1'
+
+    testImplementation 'io.cucumber:cucumber-junit:7.15.0'
+    testImplementation 'io.cucumber:cucumber-java:7.15.0'
+
+    testImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.4.0'
+    testImplementation 'org.json:json:20231013'
+    testImplementation 'io.rest-assured:json-path:5.3.0'
+
+    implementation group: 'io.rest-assured', name: 'json-schema-validator', version: '5.4.0'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty "cucumber.filter.tags", System.getProperty("cucumber.filter.tags")
+}
+
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
+}
+
+tasks.register('apiTest') {
+    dependsOn assemble, testClasses
+    doLast {
+        javaexec {
+            main = "io.cucumber.core.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+            args = [
+                    '--plugin', 'pretty',
+                    '--plugin', 'html:reports/cucumber-api-report.html',
+                    '--glue', 'stepDefs',
+                    '--tags', "@api",
+                    'src/test/resources/features/'
+            ]
+        }
+    }
+}
